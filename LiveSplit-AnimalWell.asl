@@ -1,14 +1,47 @@
 state("Animal Well") {}
 
 startup {
-  refreshRate = 60;
+  refreshRate = 120;
 
   settings.Add("st", true, "Starting");
   settings.Add("st-new", true, "Start on new game", "st");
 
   settings.Add("sp", true, "Splitting");
-  settings.Add("sp-end", true, "Split on endings", "sp");
-  //settings.Add("sp-equipment", true, "Split on equipment", "sp");
+  settings.Add("sp-fireworks", true, "Split on fireworks ending", "sp");
+  settings.Add("sp-true", true, "Split on true ending", "sp");
+
+  settings.Add("sp-equipment", true, "Split on equipment", "sp");
+  settings.Add("sp-equipment-1", true, "Firecracker", "sp-equipment");
+  settings.Add("sp-equipment-2", true, "Animal Flute", "sp-equipment");
+  settings.Add("sp-equipment-3", true, "Lantern", "sp-equipment");
+  settings.Add("sp-equipment-4", true, "Top", "sp-equipment");
+  settings.Add("sp-equipment-5", true, "Disc", "sp-equipment");
+  settings.Add("sp-equipment-6", true, "B. Wand", "sp-equipment");
+  settings.Add("sp-equipment-7", true, "Yoyo", "sp-equipment");
+  settings.Add("sp-equipment-8", true, "Slink", "sp-equipment");
+  settings.Add("sp-equipment-9", true, "Remote", "sp-equipment");
+  settings.Add("sp-equipment-10", true, "Ball", "sp-equipment");
+  settings.Add("sp-equipment-11", true, "Wheel", "sp-equipment");
+  settings.Add("sp-equipment-12", true, "UV Light", "sp-equipment");
+
+  settings.Add("sp-items", true, "Split on items", "sp");
+  settings.Add("sp-items-0", true, "Mock Disc", "sp-items");
+  settings.Add("sp-items-1", true, "S. Medal", "sp-items");
+  settings.Add("sp-items-2", false, "Cake", "sp-items");
+  settings.Add("sp-items-3", true, "House Key", "sp-items");
+  settings.Add("sp-items-4", true, "Office Key", "sp-items");
+  settings.Add("sp-items-5", false, "Closet Key", "sp-items");
+  settings.Add("sp-items-6", true, "E. Medal", "sp-items");
+  settings.Add("sp-items-7", true, "F. Pack", "sp-items");
+
+  settings.Add("sp-flames", true, "Split on flames", "sp");
+  settings.Add("sp-flames-0", true, "Blue / Seahorse", "sp-flames");
+  settings.Add("sp-flames-1", true, "Purple / Dog", "sp-flames");
+  settings.Add("sp-flames-2", true, "Violet / Chameleon", "sp-flames");
+  settings.Add("sp-flames-3", true, "Green / Ostrich", "sp-flames");
+
+  settings.Add("sp-bunnies", false, "Split on bunnies", "sp");
+  settings.Add("sp-bdtp", false, "Split on entering BDTP Chungus mouth", "sp");
 
   settings.Add("rs", true, "Resetting");
   settings.Add("rs-load", true, "Reset on opening load game menu", "rs");
@@ -21,17 +54,18 @@ startup {
   vars.ptr = null;
   vars.initDone = false;
   vars.slotDone = false;
-  vars.started = false;
+  vars.fireworks = 0;
 }
 
 init {
+  vars.done = new HashSet<string>();
   vars.state = new MemoryWatcherList();
   vars.slot = new MemoryWatcherList();
   vars.offset = IntPtr.Zero;
   vars.ptr = null;
   vars.initDone = false;
   vars.slotDone = false;
-  vars.started = false;
+  vars.fireworks = 0;
   vars.pattern = new SigScanTarget(0, "48 8b 05 ?? ?? ?? ?? 48 8b ?? ?? ?? ?? ?? 48 89 8c 1f ec 05 00 00");
 
   Action initMemory = delegate() {
@@ -46,6 +80,8 @@ init {
         print("[ANIMAL] Pointer: "+vars.offset.ToString("x"));
         vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x40c) { Name = "num" });
         vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93644) { Name = "menu" });
+        vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x754a8 + 0x33608) { Name = "game" });
+        vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93670 + 0x5d) { Name = "bean" });
         vars.initDone = true;
         break;
       }
@@ -65,8 +101,15 @@ init {
     if (vars.initDone) {
       var num = vars.state["num"].Current;
       print("[ANIMAL] Slot number: "+num.ToString());
-      vars.slot.Add(new MemoryWatcher<int>(vars.ptr + num * 0x27010 + 0x418 + 0x1c0) { Name = "igt" });
-      vars.slot.Add(new MemoryWatcher<int>(vars.ptr + num * 0x27010 + 0x418 + 0x1bc) { Name = "pigt" });
+      var offset = num * 0x27010 + 0x418;
+      vars.slot.Add(new MemoryWatcher<int>(vars.ptr + offset + 0x1c0) { Name = "igt" });
+      vars.slot.Add(new MemoryWatcher<int>(vars.ptr + offset + 0x1bc) { Name = "pigt" });
+
+      vars.slot.Add(new MemoryWatcher<short>(vars.ptr + offset + 0x1dc) { Name = "equipment" });
+      vars.slot.Add(new MemoryWatcher<byte>(vars.ptr + offset + 0x1de) { Name = "items" });
+      vars.slot.Add(new MemoryWatcher<int>(vars.ptr + offset + 0x21e) { Name = "flames" });
+      vars.slot.Add(new MemoryWatcher<int>(vars.ptr + offset + 0x198) { Name = "bunnies" });
+
       vars.slotDone = true;
     }
   };
@@ -92,11 +135,15 @@ update {
   if(!vars.slotDone)
     vars.initSlot();
 
-  if(vars.state["menu"].Changed) print("[ANIMAL] Menu: "+vars.state["menu"].Old.ToString()+" -> "+vars.state["menu"].Current.ToString());
+  if(vars.state["menu"].Changed) print("[ANIMAL] Menu: "+vars.state["menu"].Old.ToString()+" -> "+vars.state["menu"].Current.ToString()+" (frame "+vars.slot["igt"].Current.ToString()+")");
+
+  if(vars.state["game"].Changed) print("[ANIMAL] Game: "+vars.state["game"].Old.ToString()+" -> "+vars.state["game"].Current.ToString()+" (frame "+vars.slot["igt"].Current.ToString()+")");
 
   if (vars.slotDone) {
     vars.slot.UpdateAll(game);
-    timer.IsGameTimePaused = (!settings["tm-pigt"] && !vars.slot["igt"].Changed) || !vars.slot["pigt"].Changed;
+
+    if (vars.state["game"].Changed && vars.state["game"].Current == 16)
+      vars.fireworks = vars.slot["igt"].Current + 39;
   }
 }
 
@@ -110,18 +157,50 @@ start {
   }
 }
 
-onStart {
-  vars.started = true;
-}
-
 split {
   if(!vars.slotDone)
     return false;
 
-  if(vars.state["menu"].Current != 0 && vars.state["menu"].Current != 16) return false;
-
-  if(settings["sp-end"] && vars.state["menu"].Changed && vars.state["menu"].Current == 16) {
-    print("Split: Ending");
+  if (settings["sp-fireworks"] && vars.fireworks > 0 && vars.slot["igt"].Current >= vars.fireworks) {
+    print("Split: Fireworks ending");
+    vars.fireworks = 0;
+    return true;
+  } else if (settings["sp-true"] && vars.state["bean"].Current == 16) {
+    print("Split: True ending");
+    return true;
+  }
+  else if (settings["sp-bdtp"] && vars.state["bean"].Current == 13) {
+    print("Split: BDTP");
+    return true;
+  } else if(settings["sp-equipment"] && vars.slot["equipment"].Changed) {
+    for (int i = 1; i <= 12; i++) {
+      bool state = (vars.slot["equipment"].Current & (1 << i)) != 0;
+      string setting = string.Format("sp-equipment-{0}", i);
+      if (state && settings.ContainsKey(setting) && settings[setting] && vars.done.Add(setting)) {
+        print("Split: Equipment " + i + " 0x" + (1 << i).ToString("X"));
+        return true;
+      }
+    }
+  } else if(settings["sp-items"] && vars.slot["items"].Changed) {
+    for (int i = 0; i <= 7; i++) {
+      bool state = (vars.slot["items"].Current & (1 << i)) != 0;
+      string setting = string.Format("sp-items-{0}", i);
+      if (state && settings.ContainsKey(setting) && settings[setting] && vars.done.Add(setting)){
+        print("Split: Item " + (i+1) + " 0x" + (1 << i).ToString("X"));
+        return true;
+      }
+    }
+  } else if(settings["sp-flames"] && vars.slot["flames"].Changed) {
+    for (int i = 0; i <= 3; i++) {
+      bool state = (vars.slot["flames"].Current & (4 << i*8)) != 0;
+      string setting = string.Format("sp-flames-{0}", i);
+      if (state && settings.ContainsKey(setting) && settings[setting] && vars.done.Add(setting)){
+        print("Split: Flame " + (i+1));
+        return true;
+      }
+    }
+  } else if(settings["sp-bunnies"] && vars.slot["bunnies"].Changed) {
+    print("Split: Bunny");
     return true;
   }
 }
@@ -140,8 +219,9 @@ reset {
   }
 }
 
-onReset {
-  vars.started = false;
+onStart {
+  vars.done.Clear();
+  vars.fireworks = 0;
   vars.slotDone = false;
 }
 
@@ -154,8 +234,12 @@ gameTime {
   if(settings["tm-format"]) {
     int frames = gt % 60;
     int seconds = gt / 60;
-    return TimeSpan.FromSeconds(seconds + frames/100.0);
+    return TimeSpan.FromMilliseconds(seconds * 1000 + frames * 10);
   } else {
-    return TimeSpan.FromSeconds(gt/60.0);
+    return TimeSpan.FromSeconds(gt / 60.0);
   }
+}
+
+isLoading {
+    return true;
 }
