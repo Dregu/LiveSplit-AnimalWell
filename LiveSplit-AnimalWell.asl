@@ -7,8 +7,11 @@ startup {
   settings.Add("st-new", true, "Start on new game", "st");
 
   settings.Add("sp", true, "Splitting");
-  settings.Add("sp-fireworks", true, "Split on fireworks ending", "sp");
-  settings.Add("sp-true", true, "Split on true ending", "sp");
+
+  settings.Add("sp-end", true, "Split on endings", "sp");
+  settings.Add("sp-end-normal", true, "Normal ending / Fireworks", "sp-end");
+  settings.Add("sp-end-true", true, "True ending / Ride manticore", "sp-end");
+  settings.Add("sp-end-bdtp", true, "BDTP / Eaten by Big Chungus", "sp-end");
 
   settings.Add("sp-equipment", true, "Split on equipment", "sp");
   settings.Add("sp-equipment-1", true, "Firecracker", "sp-equipment");
@@ -41,7 +44,6 @@ startup {
   settings.Add("sp-flames-3", true, "Green / Ostrich", "sp-flames");
 
   settings.Add("sp-bunnies", false, "Split on bunnies", "sp");
-  settings.Add("sp-bdtp", false, "Split on entering BDTP Chungus mouth", "sp");
 
   settings.Add("rs", true, "Resetting");
   settings.Add("rs-load", true, "Reset on opening load game menu", "rs");
@@ -161,15 +163,15 @@ split {
   if(!vars.slotDone)
     return false;
 
-  if (settings["sp-fireworks"] && vars.fireworks > 0 && vars.slot["igt"].Current >= vars.fireworks) {
+  if (settings["sp-end-normal"] && vars.fireworks > 0 && vars.slot["igt"].Current >= vars.fireworks) {
     print("Split: Fireworks ending");
     vars.fireworks = 0;
     return true;
-  } else if (settings["sp-true"] && vars.state["bean"].Current == 16) {
+  } else if (settings["sp-end-true"] && vars.state["bean"].Current == 16) {
     print("Split: True ending");
     return true;
   }
-  else if (settings["sp-bdtp"] && vars.state["bean"].Current == 13) {
+  else if (settings["sp-end-bdtp"] && vars.state["bean"].Current == 13) {
     print("Split: BDTP");
     return true;
   } else if(settings["sp-equipment"] && vars.slot["equipment"].Changed) {
