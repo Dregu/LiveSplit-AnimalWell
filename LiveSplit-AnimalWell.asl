@@ -167,11 +167,10 @@ split {
     print("Split: Fireworks ending");
     vars.fireworks = 0;
     return true;
-  } else if (settings["sp-end-true"] && vars.state["bean"].Current == 16) {
+  } else if (settings["sp-end-true"] && vars.state["bean"].Changed && vars.state["bean"].Current == 16) {
     print("Split: True ending");
     return true;
-  }
-  else if (settings["sp-end-bdtp"] && vars.state["bean"].Current == 13) {
+  } else if (settings["sp-end-bdtp"] && vars.state["bean"].Changed && vars.state["bean"].Current == 13) {
     print("Split: BDTP");
     return true;
   } else if(settings["sp-equipment"] && vars.slot["equipment"].Changed) {
