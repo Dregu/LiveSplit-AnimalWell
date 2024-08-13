@@ -79,12 +79,14 @@ init {
         vars.offset = findptr + game.ReadValue<int>(findptr + 3) + 7;
         var slot_ptr = new DeepPointer(vars.offset);
         vars.ptr = slot_ptr.Deref<IntPtr>(game);
-        print("[ANIMAL] Pointer: "+vars.offset.ToString("x"));
-        vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x40c) { Name = "num" });
-        vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93644) { Name = "menu" });
-        vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x754a8 + 0x33608) { Name = "game" });
-        vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93670 + 0x5d) { Name = "bean" });
-        vars.initDone = true;
+        print("[ANIMAL] Pointer: "+vars.offset.ToString("X")+" = "+vars.ptr.ToString("X"));
+        if (vars.ptr != IntPtr.Zero) {
+          vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x40c) { Name = "num" });
+          vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93644) { Name = "menu" });
+          vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x754a8 + 0x33608) { Name = "game" });
+          vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93670 + 0x5d) { Name = "bean" });
+          vars.initDone = true;
+        }
         break;
       }
     }
