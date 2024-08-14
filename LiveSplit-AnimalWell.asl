@@ -121,7 +121,9 @@ init {
           vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x40c) { Name = "num" });
           vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93644) { Name = "menu" });
           vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x754a8 + 0x33608) { Name = "game" });
-          vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93670 + 0x5d) { Name = "bean" });
+          vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93670 + 0x5d) { Name = "bean_state" });
+          vars.state.Add(new MemoryWatcher<int>(vars.ptr + 0x93670 + 0x20) { Name = "bean_room_x" });
+          vars.state.Add(new MemoryWatcher<int>(vars.ptr + 0x93670 + 0x24) { Name = "bean_room_y" });
           vars.state.Add(new StringWatcher(vars.ptr + 0x754d0, 24) { Name = "popup" });
           vars.initDone = true;
         }
@@ -215,10 +217,10 @@ split {
     print("Split: Fireworks ending");
     vars.fireworks = 0;
     return true;
-  } else if (settings["sp-end-true"] && vars.state["bean"].Changed && vars.state["bean"].Current == 16) {
+  } else if (settings["sp-end-true"] && vars.state["bean_state"].Changed && vars.state["bean_state"].Current == 16 && vars.state["bean_room_x"].Current == 7 && vars.state["bean_room_y"].Current == 17) {
     print("Split: True ending");
     return true;
-  } else if (settings["sp-end-bdtp"] && vars.state["bean"].Changed && vars.state["bean"].Current == 13) {
+  } else if (settings["sp-end-bdtp"] && vars.state["bean_state"].Changed && vars.state["bean_state"].Current == 13 && vars.state["bean_room_x"].Current == 9 && vars.state["bean_room_y"].Current == 8) {
     print("Split: BDTP");
     return true;
   } else if(settings["sp-equipment"] && vars.slot["equipment"].Changed) {
