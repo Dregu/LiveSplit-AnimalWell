@@ -18,3 +18,5 @@ LiveSplit autosplitter script for ANIMAL WELL version 1.0.0.19+.
 - Timing
   + Game Time uses IGT frames from game, with option to use pauseless IGT for practice
   + Ability to copy the accurate IGT popup information from the game to the LiveSplit layout
+- Hacks
+  + Allows pause menu during credits to quit faster after a run

@@ -13,7 +13,7 @@ startup {
   settings.Add("sp-end-true", true, "True ending / Ride manticore", "sp-end");
   settings.Add("sp-end-bdtp", true, "BDTP / Eaten by Big Chungus", "sp-end");
   settings.Add("sp-end-popup", false, "Timer popup on fireworks or true ending (alternative)", "sp-end");
-  settings.SetToolTip("sp-end-popup", "Getting the accurate IGT requires 'show time' option enabled. True ending also requires to have picked up the Decorative Bunny fig (4h speedrun).");
+  settings.SetToolTip("sp-end-popup", "Getting the accurate IGT requires 'show time' option enabled.\nTrue ending also requires to have picked up the Decorative Bunny fig (4h speedrun).");
 
   settings.Add("sp-equipment", true, "Split on equipment", "sp");
   settings.Add("sp-equipment-1", true, "Firecracker", "sp-equipment");
@@ -49,13 +49,20 @@ startup {
 
   settings.Add("rs", true, "Resetting");
   settings.Add("rs-load", true, "Reset on opening 'load game' menu", "rs");
+  settings.SetToolTip("rs-load", "Also resets automatically if you start a new game\non a slot that doesn't have a save yet.");
 
   settings.Add("tm", true, "Timing");
   settings.Add("tm-force", true, "Force LiveSplit timing method to Game Time", "tm");
   settings.Add("tm-popup", false, "Show latest IGT from ending popup on layout (for SRC)", "tm");
-  settings.SetToolTip("tm-popup", "Getting the accurate IGT requires 'show time' option enabled. True ending also requires to have picked up the Decorative Bunny fig (4h speedrun).");
+  settings.SetToolTip("tm-popup", "Getting the accurate IGT requires 'show time' option enabled.\nTrue ending also requires to have picked up the Decorative Bunny fig (4h speedrun).");
   settings.Add("tm-format", false, "Format Game Time as H:M:S:frames (for SRC, weird)", "tm");
+  settings.SetToolTip("tm-format", "Using the term format very loosely here.\nIt just tricks the timer to skip .4s every second,\nwhich might make your deltas seem weird.");
   settings.Add("tm-pigt", false, "Use pauseless IGT (for practice etc)", "tm");
+
+  settings.Add("hc", true, "Hacks");
+  settings.SetToolTip("hc", "These options write to the game memory.\nDon't use if you're not sure you can use these.\nI'm just a tool, not the rules.");
+  settings.Add("hc-credits-skip", false, "Allow pause menu during credits", "hc");
+  settings.SetToolTip("hc-credits-skip", "This writes to the game memory, but technically\nit happens after the run is over, probably.\nUse to GTFO back to the main menu after a run.");
 
   vars.done = new HashSet<string>();
   vars.state = new MemoryWatcherList();
@@ -120,11 +127,15 @@ init {
         if (vars.ptr != IntPtr.Zero) {
           vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x40c) { Name = "num" });
           vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93644) { Name = "menu" });
+          vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93608) { Name = "pause" });
           vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x754a8 + 0x33608) { Name = "game" });
           vars.state.Add(new MemoryWatcher<byte>(vars.ptr + 0x93670 + 0x5d) { Name = "bean_state" });
           vars.state.Add(new MemoryWatcher<int>(vars.ptr + 0x93670 + 0x20) { Name = "bean_room_x" });
           vars.state.Add(new MemoryWatcher<int>(vars.ptr + 0x93670 + 0x24) { Name = "bean_room_y" });
           vars.state.Add(new StringWatcher(vars.ptr + 0x754d0, 24) { Name = "popup" });
+          vars.state.Add(new MemoryWatcher<byte>(modules.First().BaseAddress + 0x2bd5a10 + 0x1b) { Name = "escape" });
+          vars.state.Add(new MemoryWatcher<byte>(modules.First().BaseAddress + 0x2bd5b14) { Name = "xinput" });
+          vars.state.Add(new MemoryWatcher<byte>(modules.First().BaseAddress + 0x2bd5b58) { Name = "ds" });
           vars.initDone = true;
         }
         break;
@@ -186,6 +197,8 @@ update {
 
   if(vars.state["game"].Changed) print("[ANIMAL] Game: "+vars.state["game"].Old.ToString()+" -> "+vars.state["game"].Current.ToString()+" (frame "+vars.slot["igt"].Current.ToString()+")");
 
+  if(vars.state["xinput"].Changed) print("[ANIMAL] XInput: "+vars.state["xinput"].Old.ToString("X")+" -> "+vars.state["xinput"].Current.ToString("X")+" (frame "+vars.slot["igt"].Current.ToString()+")");
+
   if (vars.state["popup"].Changed) {
     vars.popup();
     print("[ANIMAL] Popup: " + vars.state["popup"].Old.ToString() + " -> " + vars.state["popup"].Current.ToString() + " (frame " + vars.slot["igt"].Current.ToString() + ")");
@@ -196,6 +209,15 @@ update {
 
     if (vars.state["game"].Changed && vars.state["game"].Current == 16)
       vars.fireworks = vars.slot["igt"].Current + 39;
+
+    if (settings["hc-credits-skip"] && vars.state["game"].Current >= 16 && vars.state["menu"].Current == 0 && vars.state["menu"].Old == 0 && vars.state["pause"].Current == 0 &&
+        ((vars.state["escape"].Current > 0 && vars.state["escape"].Old == 0) ||
+        (vars.state["xinput"].Current == 0x10 && vars.state["xinput"].Old == 0) ||
+        (vars.state["ds"].Current == 0x08 && vars.state["ds"].Old == 0))) {
+      memory.WriteValue<byte>((IntPtr)(vars.ptr + 0x93608), 1);
+      memory.WriteValue<byte>((IntPtr)(vars.ptr + 0x93644), 8);
+      //memory.WriteValue<byte>((IntPtr)(vars.ptr + 0x754a8 + 0x33608), 0); // skip credits
+    }
   }
 }
 
