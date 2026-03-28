@@ -46,6 +46,24 @@ startup {
   settings.Add("sp-flames-3", true, "Green / Ostrich", "sp-flames");
 
   settings.Add("sp-bunnies", false, "Split on bunnies", "sp");
+  settings.Add("sp-bunnies-0", true, "Tutorial", "sp-bunnies");
+  settings.Add("sp-bunnies-2", true, "Barcode/Origami", "sp-bunnies");
+  settings.Add("sp-bunnies-3", true, "Spike", "sp-bunnies");
+  settings.Add("sp-bunnies-4", true, "Ghost", "sp-bunnies");
+  settings.Add("sp-bunnies-6", true, "Fish Mural", "sp-bunnies");
+  settings.Add("sp-bunnies-7", true, "Connect-the-Dots", "sp-bunnies");
+  settings.Add("sp-bunnies-8", true, "TV", "sp-bunnies");
+  settings.Add("sp-bunnies-9", true, "UV", "sp-bunnies");
+  settings.Add("sp-bunnies-10", true, "Bulb", "sp-bunnies");
+  settings.Add("sp-bunnies-11", true, "Jungle/Vine", "sp-bunnies");
+  settings.Add("sp-bunnies-15", true, "Bunny Mural", "sp-bunnies");
+  settings.Add("sp-bunnies-22", true, "Duck", "sp-bunnies");
+  settings.Add("sp-bunnies-25", true, "Ghost Dog", "sp-bunnies");
+  settings.Add("sp-bunnies-28", true, "Dream", "sp-bunnies");
+  settings.Add("sp-bunnies-30", true, "Floor is Lava", "sp-bunnies");
+  settings.Add("sp-bunnies-31", true, "Crow", "sp-bunnies");
+  
+  
   settings.Add("sp-eggs", false, "Split on eggs", "sp");
 
   settings.Add("rs", true, "Resetting");
@@ -275,8 +293,15 @@ split {
       }
     }
   } else if(settings["sp-bunnies"] && vars.slot["bunnies"].Changed && vars.slot["bunnies"].Current > vars.slot["bunnies"].Old ) {
-    print("Split: Bunny");
-    return true;
+    for (int i = 0; i <= 31; i++) {
+	  bool state = (vars.slot["bunnies"].Current & (1 << i)) != 0;
+	  string setting = string.Format("sp-bunnies-{0}", i);
+	  if (state && settings.ContainsKey(setting) && settings[setting] && vars.done.Add(setting)){
+	    print("Split: Bunny" + (i+1));
+		return true;
+	  }
+	}
+    
   } else if(settings["sp-eggs"] && vars.slot["eggs"].Changed && vars.slot["eggs"].Current > vars.slot["eggs"].Old) {
     print("Split: Egg");
     return true;
