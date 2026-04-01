@@ -152,9 +152,9 @@ init {
           vars.state.Add(new MemoryWatcher<int>(vars.ptr + 0x93670 + 0x20) { Name = "bean_room_x" });
           vars.state.Add(new MemoryWatcher<int>(vars.ptr + 0x93670 + 0x24) { Name = "bean_room_y" });
           vars.state.Add(new StringWatcher(vars.ptr + 0x754d0, 24) { Name = "popup" });
-          vars.state.Add(new MemoryWatcher<byte>(modules.First().BaseAddress + 0x2bd5a10 + 0x1b) { Name = "escape" });
-          vars.state.Add(new MemoryWatcher<byte>(modules.First().BaseAddress + 0x2bd5b14) { Name = "xinput" });
-          vars.state.Add(new MemoryWatcher<byte>(modules.First().BaseAddress + 0x2bd5b58) { Name = "ds" });
+          vars.state.Add(new MemoryWatcher<byte>(modules.First().BaseAddress + 0x2bdea10 + 0x1b) { Name = "escape" });
+          vars.state.Add(new MemoryWatcher<byte>(modules.First().BaseAddress + 0x2bdeb14) { Name = "xinput" });
+          vars.state.Add(new MemoryWatcher<byte>(modules.First().BaseAddress + 0x2bdeb58) { Name = "ds" });
           vars.initDone = true;
         }
         break;
